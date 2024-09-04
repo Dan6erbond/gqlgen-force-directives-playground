@@ -88,3 +88,13 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  PrivateTodo:
+    fields:
+      user:
+        resolver: true
+  ProjectTodo:
+    fields:
+      user:
+        resolver: true
+      project:
+        resolver: true

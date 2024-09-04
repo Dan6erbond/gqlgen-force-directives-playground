@@ -40,6 +40,8 @@ type Config struct {
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
+	PrivateTodo() PrivateTodoResolver
+	ProjectTodo() ProjectTodoResolver
 	Query() QueryResolver
 }
 
@@ -83,6 +85,13 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateTodo(ctx context.Context, input model.NewTodo) (model.Todo, error)
+}
+type PrivateTodoResolver interface {
+	User(ctx context.Context, obj *model.PrivateTodo) (*model.User, error)
+}
+type ProjectTodoResolver interface {
+	User(ctx context.Context, obj *model.ProjectTodo) (*model.User, error)
+	Project(ctx context.Context, obj *model.ProjectTodo) (*model.Project, error)
 }
 type QueryResolver interface {
 	Todos(ctx context.Context) ([]model.Todo, error)
@@ -611,7 +620,7 @@ func (ec *executionContext) _PrivateTodo_user(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
+		return ec.resolvers.PrivateTodo().User(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -632,8 +641,8 @@ func (ec *executionContext) fieldContext_PrivateTodo_user(_ context.Context, fie
 	fc = &graphql.FieldContext{
 		Object:     "PrivateTodo",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -881,7 +890,7 @@ func (ec *executionContext) _ProjectTodo_user(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
+		return ec.resolvers.ProjectTodo().User(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -902,8 +911,8 @@ func (ec *executionContext) fieldContext_ProjectTodo_user(_ context.Context, fie
 	fc = &graphql.FieldContext{
 		Object:     "ProjectTodo",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -931,7 +940,7 @@ func (ec *executionContext) _ProjectTodo_project(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Project, nil
+		return ec.resolvers.ProjectTodo().Project(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -952,8 +961,8 @@ func (ec *executionContext) fieldContext_ProjectTodo_project(_ context.Context, 
 	fc = &graphql.FieldContext{
 		Object:     "ProjectTodo",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -3129,23 +3138,54 @@ func (ec *executionContext) _PrivateTodo(ctx context.Context, sel ast.SelectionS
 		case "id":
 			out.Values[i] = ec._PrivateTodo_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "text":
 			out.Values[i] = ec._PrivateTodo_text(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "done":
 			out.Values[i] = ec._PrivateTodo_done(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "user":
-			out.Values[i] = ec._PrivateTodo_user(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PrivateTodo_user(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3227,28 +3267,90 @@ func (ec *executionContext) _ProjectTodo(ctx context.Context, sel ast.SelectionS
 		case "id":
 			out.Values[i] = ec._ProjectTodo_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "text":
 			out.Values[i] = ec._ProjectTodo_text(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "done":
 			out.Values[i] = ec._ProjectTodo_done(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "user":
-			out.Values[i] = ec._ProjectTodo_user(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProjectTodo_user(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "project":
-			out.Values[i] = ec._ProjectTodo_project(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProjectTodo_project(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3749,6 +3851,10 @@ func (ec *executionContext) unmarshalNNewTodo2giteaᚗdikuriumᚗchᚋInnoPeak�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNProject2giteaᚗdikuriumᚗchᚋInnoPeakᚋgqlgenᚑforceᚑdirectivesᚑplaygroundᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v model.Project) graphql.Marshaler {
+	return ec._Project(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNProject2ᚖgiteaᚗdikuriumᚗchᚋInnoPeakᚋgqlgenᚑforceᚑdirectivesᚑplaygroundᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -3826,6 +3932,10 @@ func (ec *executionContext) marshalNTodo2ᚕgiteaᚗdikuriumᚗchᚋInnoPeakᚋg
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNUser2giteaᚗdikuriumᚗchᚋInnoPeakᚋgqlgenᚑforceᚑdirectivesᚑplaygroundᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUser2ᚖgiteaᚗdikuriumᚗchᚋInnoPeakᚋgqlgenᚑforceᚑdirectivesᚑplaygroundᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {

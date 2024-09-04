@@ -16,6 +16,21 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
 }
 
+// User is the resolver for the user field.
+func (r *privateTodoResolver) User(ctx context.Context, obj *model.PrivateTodo) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: User - user"))
+}
+
+// User is the resolver for the user field.
+func (r *projectTodoResolver) User(ctx context.Context, obj *model.ProjectTodo) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: User - user"))
+}
+
+// Project is the resolver for the project field.
+func (r *projectTodoResolver) Project(ctx context.Context, obj *model.ProjectTodo) (*model.Project, error) {
+	panic(fmt.Errorf("not implemented: Project - project"))
+}
+
 // Todos is the resolver for the todos field.
 func (r *queryResolver) Todos(ctx context.Context) ([]model.Todo, error) {
 	panic(fmt.Errorf("not implemented: Todos - todos"))
@@ -24,8 +39,16 @@ func (r *queryResolver) Todos(ctx context.Context) ([]model.Todo, error) {
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
+// PrivateTodo returns PrivateTodoResolver implementation.
+func (r *Resolver) PrivateTodo() PrivateTodoResolver { return &privateTodoResolver{r} }
+
+// ProjectTodo returns ProjectTodoResolver implementation.
+func (r *Resolver) ProjectTodo() ProjectTodoResolver { return &projectTodoResolver{r} }
+
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
+type privateTodoResolver struct{ *Resolver }
+type projectTodoResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
