@@ -36,15 +36,15 @@ type PrivateTodo implements Todo @goModel(forceGenerate: true) {
   id: ID!
   text: String!
   done: Boolean!
-  user: User! @goField(forceResolver: true)
+  user: User!
 }
 
 type ProjectTodo implements Todo @goModel(forceGenerate: true) {
   id: ID!
   text: String!
   done: Boolean!
-  user: User! @goField(forceResolver: true)
-  project: Project! @goField(forceResolver: true)
+  user: User!
+  project: Project!
 }
 
 type User {
