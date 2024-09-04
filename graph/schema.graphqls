@@ -1,0 +1,71 @@
+directive @goModel(
+  model: String
+  models: [String!]
+  forceGenerate: Boolean
+) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
+
+directive @goField(
+  forceResolver: Boolean
+  name: String
+  omittable: Boolean
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @goTag(
+  key: String!
+  value: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @goExtraField(
+  name: String
+  type: String!
+  overrideTags: String
+  description: String
+) on OBJECT | INPUT_OBJECT
+
+interface Todo
+  @goModel(
+    model: "gitea.dikurium.ch/InnoPeak/gqlgen-force-directives-playground/graph/model.Todo"
+  ) {
+  id: ID!
+  text: String!
+  done: Boolean!
+  user: User!
+}
+
+type PrivateTodo implements Todo @goModel(forceGenerate: true) {
+  id: ID!
+  text: String!
+  done: Boolean!
+  user: User! @goField(forceResolver: true)
+}
+
+type ProjectTodo implements Todo @goModel(forceGenerate: true) {
+  id: ID!
+  text: String!
+  done: Boolean!
+  user: User! @goField(forceResolver: true)
+  project: Project! @goField(forceResolver: true)
+}
+
+type User {
+  id: ID!
+  name: String!
+}
+
+type Project {
+  id: ID!
+  name: String!
+}
+
+type Query {
+  todos: [Todo!]!
+}
+
+input NewTodo {
+  text: String!
+  userId: String!
+}
+
+type Mutation {
+  createTodo(input: NewTodo!): Todo!
+}
