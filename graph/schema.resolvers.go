@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	"gitea.dikurium.ch/InnoPeak/gqlgen-force-directives-playground/graph/model"
+	"github.com/Dan6erbond/gqlgen-force-directives-playground/graph/model"
 )
 
 // CreateTodo is the resolver for the createTodo field.
