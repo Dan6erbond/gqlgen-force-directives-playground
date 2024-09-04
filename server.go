@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	"gitea.dikurium.ch/InnoPeak/gqlgen-force-directives-playground/graph"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/Dan6erbond/gqlgen-force-directives-playground/graph"
 )
 
 const defaultPort = "8080"

@@ -24,7 +24,7 @@ directive @goExtraField(
 
 interface Todo
   @goModel(
-    model: "gitea.dikurium.ch/InnoPeak/gqlgen-force-directives-playground/graph/model.Todo"
+    model: "github.com/Dan6erbond/gqlgen-force-directives-playground/graph/model.Todo"
   ) {
   id: ID!
   text: String!

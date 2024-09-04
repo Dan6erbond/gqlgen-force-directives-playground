@@ -1,4 +1,4 @@
-module gitea.dikurium.ch/InnoPeak/gqlgen-force-directives-playground
+module github.com/Dan6erbond/gqlgen-force-directives-playground
 
 go 1.22.3
 
